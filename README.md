@@ -1,6 +1,6 @@
 # 🏙️ CivicFix — Smart Civic Issue Reporting System
 
-> **BCA Final Year Project | IBM SkillsBuild | UN SDG 11 — Sustainable Cities and Communities**
+> **IBM / BCA Final Year Project | IBM | UN SDG 11 — Sustainable Cities and Communities**
 
 CivicFix is a full-stack web application that enables citizens to report and track civic issues such as potholes, broken streetlights, garbage overflow, and drainage problems. It connects citizens to local authorities with a real-time reporting dashboard and interactive map.
 
