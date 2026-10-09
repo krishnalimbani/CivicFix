@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Live Issue Map{% endblock %}
+
+{% block head %}
+<style>
+  #mainMap { height: calc(100vh - 64px); width: 100%; }
+  .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.15); }
+  .leaflet-popup-content { font-family: 'Inter', sans-serif; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Map Controls Overlay -->
+<div class="map-controls-overlay">
+  <div class="map-overlay-header">
+    <h6 class="mb-0"><i class="bi bi-map-fill me-2 text-primary"></i>Live Issue Map</h6>
+    <span class="live-badge"><span class="live-dot"></span>Live</span>
+  </div>
+  <div class="map-overlay-stats" id="mapStats">
+    <div class="map-stat"><span class="ms-num" id="ms-total">—</span><span>Total</span></div>
+    <div class="map-stat"><span class="ms-num ms-green" id="ms-resolved">—</span><span>Resolved</span></div>
+    <div class="map-stat"><span class="ms-num ms-orange" id="ms-progress">—</span><span>In Progress</span></div>
+    <div class="map-stat"><span class="ms-num ms-blue" id="ms-submitted">—</span><span>Submitted</span></div>
+  </div>
+  <div class="map-filter-pills mt-2">
+    <button class="filter-pill active" data-filter="all">All</button>
+    <button class="filter-pill" data-filter="Submitted">Submitted</button>
+    <button class="filter-pill" data-filter="Under Review">Under Review</button>
+    <button class="filter-pill" data-filter="In Progress">In Progress</button>
+    <button class="filter-pill" data-filter="Resolved">Resolved</button>
+  </div>
+  <div class="map-legend mt-3">
+    <div class="legend-item"><span class="legend-dot ld-blue"></span>Submitted</div>
+    <div class="legend-item"><span class="legend-dot ld-yellow"></span>Under Review</div>
+    <div class="legend-item"><span class="legend-dot ld-orange"></span>In Progress</div>
+    <div class="legend-item"><span class="legend-dot ld-green"></span>Resolved</div>
+  </div>
+  <a href="{{ url_for('report') }}" class="btn btn-report-map mt-3 w-100">
+    <i class="bi bi-plus-circle-fill me-1"></i>Report New Issue
+  </a>
+</div>
+
+<div id="mainMap"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const map = L.map('mainMap', { zoomControl: false }).setView([23.0225, 72.5714], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
+}).addTo(map);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+const statusColors = {
+  'Submitted'   : '#3b82f6',
+  'Under Review': '#f59e0b',
+  'In Progress' : '#f97316',
+  'Resolved'    : '#22c55e'
+};
+
+function makeIcon(status) {
+  const color = statusColors[status] || '#6b7280';
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:${color};width:16px;height:16px;border-radius:50%;
+      border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.35);
+      transition:transform .2s;cursor:pointer;
+    "></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+}
+
+let allMarkers = [];
+let activeFilter = 'all';
+
+function loadReports() {
+  fetch('/api/reports')
+    .then(r => r.json())
+    .then(data => {
+      allMarkers.forEach(m => map.removeLayer(m));
+      allMarkers = [];
+      data.forEach(r => {
+        if (activeFilter !== 'all' && r.status !== activeFilter) return;
+        const marker = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status) });
+        marker.addTo(map);
+        marker.bindPopup(`
+          <div style="min-width:200px;font-family:'Inter',sans-serif">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <code style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px">${r.report_id}</code>
+              <span style="font-size:11px;background:${statusColors[r.status]}22;color:${statusColors[r.status]};
+                padding:2px 8px;border-radius:20px;font-weight:600">${r.status}</span>
+            </div>
+            <strong style="font-size:14px">${r.category}</strong>
+            <p style="font-size:12px;color:#57606a;margin:6px 0">${r.description.substring(0,100)}${r.description.length>100?'...':''}</p>
+            <div style="font-size:11px;color:#6b7280"><i>📍 ${r.location}</i></div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px"><i>🕐 ${r.created_at}</i></div>
+            <a href="/track?report_id=${r.report_id}" style="display:block;margin-top:10px;text-align:center;
+              background:#3b82f6;color:white;padding:6px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600">
+              Track This Report →
+            </a>
+          </div>
+        `);
+        allMarkers.push(marker);
+      });
+    });
+}
+
+// Load stats
+fetch('/api/stats')
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('ms-total').textContent    = d.total;
+    document.getElementById('ms-resolved').textContent = d.resolved;
+    document.getElementById('ms-progress').textContent = d.in_progress;
+    document.getElementById('ms-submitted').textContent= d.submitted;
+  });
+
+// Filter pills
+document.querySelectorAll('.filter-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    loadReports();
+  });
+});
+
+loadReports();
+// Refresh every 30 seconds
+setInterval(loadReports, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Admin Header Bar -->
+<div class="admin-header">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h4 class="mb-0 fw-700"><i class="bi bi-speedometer2 me-2 text-primary"></i>Admin Dashboard</h4>
+        <small class="text-muted">Manage and update all civic reports</small>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <span class="badge bg-primary px-3 py-2">
+          <i class="bi bi-person-circle me-1"></i>Administrator
+        </span>
+        <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid admin-body">
+
+  <!-- Stat Cards -->
+  <div class="row gy-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="admin-stat-card asc-blue">
+        <div class="asc-icon"><i class="bi bi-clipboard-data"></i></div>
+        <div class="asc-body">
+          <h3>{{ total }}</h3>
+          <p>Total Reports</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="admin-stat-card asc-orange">
+        <div class="asc-icon"><i class="bi bi-send"></i></div>
+        <div class="asc-body">
+          <h3>{{ submitted }}</h3>
+          <p>Submitted</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="admin-stat-card asc-purple">
+        <div class="asc-icon"><i class="bi bi-gear-wide-connected"></i></div>
+        <div class="asc-body">
+          <h3>{{ progress }}</h3>
+          <p>In Progress</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="admin-stat-card asc-green">
+        <div class="asc-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="asc-body">
+          <h3>{{ resolved }}</h3>
+          <p>Resolved</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="admin-filter-bar mb-4">
+    <form method="GET" action="{{ url_for('admin_dashboard') }}" class="d-flex flex-wrap gap-2 align-items-end">
+      <div>
+        <label class="form-label small mb-1">Search</label>
+        <input type="text" class="form-control form-control-sm" name="search" placeholder="ID, keyword, location..."
+          value="{{ search }}" style="min-width:200px"/>
+      </div>
+      <div>
+        <label class="form-label small mb-1">Status</label>
+        <select class="form-select form-select-sm" name="status" style="min-width:150px">
+          <option value="">All Status</option>
+          {% for s in ['Submitted','Under Review','In Progress','Resolved'] %}
+          <option {% if status_filter == s %}selected{% endif %} value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label small mb-1">Category</label>
+        <select class="form-select form-select-sm" name="category" style="min-width:160px">
+          <option value="">All Categories</option>
+          {% for c in ['Pothole','Broken Streetlight','Garbage Overflow','Drainage Problem','Water Leakage','Road Damage','Noise Pollution','Other'] %}
+          <option {% if category_filter == c %}selected{% endif %} value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i></a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Reports Table -->
+  <div class="admin-table-card">
+    <div class="admin-table-header">
+      <span>{{ reports|length }} Report(s) Found</span>
+      <a href="{{ url_for('map_view') }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-map me-1"></i>View on Map
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table admin-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Report ID</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if reports %}
+            {% for r in reports %}
+            <tr class="report-row">
+              <td class="text-muted small">{{ loop.index }}</td>
+              <td><code class="report-id-sm">{{ r['report_id'] }}</code></td>
+              <td>
+                <span class="cat-badge-sm">{{ r['category'] }}</span>
+              </td>
+              <td class="desc-cell">{{ r['description'][:60] }}{% if r['description']|length > 60 %}...{% endif %}</td>
+              <td class="small text-muted">
+                <i class="bi bi-geo-alt me-1"></i>{{ r['location'][:25] }}{% if r['location']|length > 25 %}...{% endif %}
+              </td>
+              <td>
+                <span class="status-badge status-{{ r['status']|lower|replace(' ', '-') }}">{{ r['status'] }}</span>
+              </td>
+              <td class="small text-muted">{{ r['created_at'][:10] }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{{ url_for('admin_view_report', id=r['id']) }}" class="btn btn-sm btn-outline-primary" title="View">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline-success" title="Update Status"
+                    data-bs-toggle="modal" data-bs-target="#statusModal{{ r['id'] }}">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <form method="POST" action="{{ url_for('delete_report', id=r['id']) }}"
+                    onsubmit="return confirm('Delete this report?')" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>No reports match the current filters.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /container-fluid -->
+
+<!-- Status Update Modals -->
+{% for r in reports %}
+<div class="modal fade" id="statusModal{{ r['id'] }}" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Update Status</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('update_status', id=r['id']) }}">
+        <div class="modal-body">
+          <p class="text-muted small mb-3">Report: <code>{{ r['report_id'] }}</code> — {{ r['category'] }}</p>
+          <label class="form-label fw-600">New Status</label>
+          <select name="status" class="form-select" required>
+            {% for s in ['Submitted','Under Review','In Progress','Resolved'] %}
+            <option value="{{ s }}" {% if r['status'] == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

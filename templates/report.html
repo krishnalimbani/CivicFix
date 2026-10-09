@@ -1,0 +1,603 @@
+{% extends "base.html" %}
+{% block title %}Report an Issue{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8" data-aos="fade-right">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb breadcrumb-custom">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item active">Report an Issue</li>
+          </ol>
+        </nav>
+        <h1 class="page-title"><i class="bi bi-megaphone-fill me-3"></i>Report a Civic Issue</h1>
+        <p class="page-subtitle">Fill in the details below. Your unique Report ID will be generated instantly.</p>
+      </div>
+      <div class="col-lg-4 text-end d-none d-lg-block" data-aos="fade-left">
+        <div class="page-header-icon"><i class="bi bi-file-earmark-plus"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <!-- Info Cards -->
+        <div class="row gy-3 mb-4">
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">
+            <div class="info-tip-card">
+              <i class="bi bi-shield-check text-success"></i>
+              <span>Your report is private and secure</span>
+            </div>
+          </div>
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="info-tip-card">
+              <i class="bi bi-lightning-charge text-warning"></i>
+              <span>Get your Report ID instantly</span>
+            </div>
+          </div>
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="info-tip-card">
+              <i class="bi bi-geo-alt text-primary"></i>
+              <span>Pin exact location on map</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Form -->
+        <div class="form-card" data-aos="fade-up">
+          <div class="form-card-header">
+            <h4 class="mb-0"><i class="bi bi-pencil-fill me-2"></i>Issue Details</h4>
+          </div>
+          <div class="form-card-body">
+            <form method="POST" action="{{ url_for('report') }}" enctype="multipart/form-data" id="reportForm" novalidate>
+
+              <!-- Category -->
+              <div class="mb-4">
+                <label class="form-label required-label">Issue Category</label>
+                <div class="category-grid">
+                  {% set cats = [
+                    ('Pothole',          'bi-cone-striped',    'cat-orange'),
+                    ('Broken Streetlight','bi-lightbulb-off',  'cat-yellow'),
+                    ('Garbage Overflow',  'bi-trash3',          'cat-green'),
+                    ('Drainage Problem',  'bi-droplet-half',    'cat-blue'),
+                    ('Water Leakage',     'bi-water',           'cat-cyan'),
+                    ('Road Damage',       'bi-exclamation-triangle','cat-red'),
+                    ('Noise Pollution',   'bi-volume-up',       'cat-purple'),
+                    ('Other',             'bi-three-dots',      'cat-gray')
+                  ] %}
+                  {% for val, icon, cls in cats %}
+                  <label class="cat-radio-label {{ cls }}">
+                    <input type="radio" name="category" value="{{ val }}" required/>
+                    <div class="cat-radio-inner">
+                      <i class="bi {{ icon }}"></i>
+                      <span>{{ val }}</span>
+                    </div>
+                  </label>
+                  {% endfor %}
+                </div>
+                <div class="invalid-feedback d-block" id="categoryError" style="display:none!important"></div>
+              </div>
+
+              <!-- Description -->
+              <div class="mb-4">
+                <label for="description" class="form-label required-label">Description</label>
+                <textarea class="form-control custom-input" id="description" name="description"
+                  rows="4" placeholder="Describe the issue clearly — severity, exact spot, since when, etc."
+                  minlength="20" maxlength="1000" required></textarea>
+                <div class="d-flex justify-content-between mt-1">
+                  <div class="invalid-feedback">Please provide a description (at least 20 characters).</div>
+                  <small class="text-muted ms-auto"><span id="descCount">0</span>/1000</small>
+                </div>
+              </div>
+
+              <!-- Location -->
+              <div class="mb-4" style="position:relative">
+                <label for="location" class="form-label required-label">Location / Address</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+                  <input type="text" class="form-control custom-input" id="location" name="location"
+                    placeholder="e.g., Near Civil Hospital, MG Road, Ahmedabad" required maxlength="255"
+                    autocomplete="off"/>
+                  <button type="button" class="btn btn-outline-primary" id="searchLocBtn" onclick="searchLocation()" title="Find on map">
+                    <i class="bi bi-search" id="searchLocIcon"></i>
+                  </button>
+                </div>
+                <ul id="locSuggestions" class="loc-suggestions" style="display:none"></ul>
+                <div class="invalid-feedback">Please enter the location.</div>
+                <div id="searchLocStatus" class="mt-1" style="display:none;font-size:.82rem"></div>
+              </div>
+
+              <!-- Pincode Search -->
+              <div class="mb-4">
+                <label for="pincode" class="form-label">
+                  <i class="bi bi-mailbox me-1 text-primary"></i>Search by PIN Code
+                  <span class="badge bg-secondary ms-2 fw-normal">Optional</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-hash text-primary"></i></span>
+                  <input type="text" class="form-control custom-input" id="pincode"
+                    placeholder="e.g., 380009" maxlength="10" pattern="[0-9]{4,10}"
+                    title="Enter a valid PIN / postal code"/>
+                  <button type="button" class="btn btn-outline-success" id="searchPinBtn" onclick="searchByPincode()" title="Find PIN code on map">
+                    <i class="bi bi-search" id="searchPinIcon"></i>
+                  </button>
+                </div>
+                <div id="searchPinStatus" class="mt-1" style="display:none;font-size:.82rem"></div>
+              </div>
+
+              <!-- Map Picker -->
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                  <label class="form-label mb-0">
+                    <i class="bi bi-map-fill me-1 text-primary"></i>Pin Location on Map
+                    <span class="badge bg-secondary ms-2 fw-normal">Optional but recommended</span>
+                  </label>
+                  <button type="button" class="btn btn-sm btn-locate" id="locateBtn" onclick="locateMe()">
+                    <i class="bi bi-crosshair me-1"></i>Use My Location
+                  </button>
+                </div>
+                <div id="locationMap" class="location-map-picker"></div>
+                <small class="text-muted">Click the map to drop a pin, drag to adjust, or use <strong>Use My Location</strong> to auto-detect.</small>
+                <input type="hidden" name="latitude"  id="latitude"/>
+                <input type="hidden" name="longitude" id="longitude"/>
+                <div id="coordDisplay" class="coord-display mt-2" style="display:none">
+                  <i class="bi bi-pin-map-fill text-success me-1"></i>
+                  <span id="coordText"></span>
+                  <button type="button" class="btn btn-sm btn-link text-danger ms-2 p-0" id="clearPin">
+                    <i class="bi bi-x-circle"></i> Clear
+                  </button>
+                </div>
+              </div>
+
+              <!-- Photo -->
+              <div class="mb-4">
+                <label for="photo" class="form-label">
+                  <i class="bi bi-camera-fill me-1 text-primary"></i>Upload Photo
+                  <span class="badge bg-secondary ms-2 fw-normal">Optional</span>
+                </label>
+                <div class="photo-upload-area" id="photoArea">
+                  <input type="file" class="form-control" id="photo" name="photo"
+                    accept="image/*" style="display:none"/>
+                  <div class="photo-placeholder" id="photoPlaceholder" onclick="document.getElementById('photo').click()">
+                    <i class="bi bi-cloud-upload fs-2 text-muted"></i>
+                    <p class="mb-0 text-muted">Click to upload or drag & drop</p>
+                    <small class="text-muted">PNG, JPG, WEBP up to 5MB</small>
+                  </div>
+                  <div id="photoPreview" style="display:none" class="text-center">
+                    <img id="previewImg" src="" alt="Preview" class="photo-preview-img"/>
+                    <br/>
+                    <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="clearPhoto()">
+                      <i class="bi bi-trash me-1"></i>Remove Photo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-4"/>
+              <h5 class="mb-3 text-muted fw-600"><i class="bi bi-person me-2"></i>Your Details <small class="text-muted fw-normal">(Optional)</small></h5>
+
+              <div class="row">
+                <div class="col-md-6 mb-4">
+                  <label for="name" class="form-label">Full Name</label>
+                  <input type="text" class="form-control custom-input" id="name" name="name"
+                    placeholder="Your name" maxlength="100"/>
+                </div>
+                <div class="col-md-6 mb-4">
+                  <label for="email" class="form-label">Email Address</label>
+                  <input type="email" class="form-control custom-input" id="email" name="email"
+                    placeholder="your@email.com" maxlength="200"/>
+                  <div class="invalid-feedback">Please enter a valid email address.</div>
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="d-grid mt-2">
+                <button type="submit" class="btn btn-submit-report" id="submitBtn">
+                  <span class="btn-text">
+                    <i class="bi bi-send-fill me-2"></i>Submit Report
+                  </span>
+                  <span class="btn-loading d-none">
+                    <span class="spinner-border spinner-border-sm me-2"></span>Submitting...
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="sidebar-card mb-4" data-aos="fade-left">
+          <h6 class="sidebar-title"><i class="bi bi-info-circle-fill me-2 text-primary"></i>Reporting Tips</h6>
+          <ul class="tips-list">
+            <li><i class="bi bi-check2 text-success me-2"></i>Be specific about the exact location</li>
+            <li><i class="bi bi-check2 text-success me-2"></i>Add a photo for faster resolution</li>
+            <li><i class="bi bi-check2 text-success me-2"></i>Describe how severe the issue is</li>
+            <li><i class="bi bi-check2 text-success me-2"></i>Mention how long the issue has existed</li>
+            <li><i class="bi bi-check2 text-success me-2"></i>Save your Report ID after submission</li>
+          </ul>
+        </div>
+        <div class="sidebar-card" data-aos="fade-left" data-aos-delay="100">
+          <h6 class="sidebar-title"><i class="bi bi-clock-history me-2 text-warning"></i>Status Timeline</h6>
+          <div class="timeline-mini">
+            <div class="timeline-mini-item">
+              <div class="tm-dot tm-dot-blue"></div>
+              <div>
+                <strong>Submitted</strong>
+                <p>Report received by CivicFix</p>
+              </div>
+            </div>
+            <div class="timeline-mini-item">
+              <div class="tm-dot tm-dot-yellow"></div>
+              <div>
+                <strong>Under Review</strong>
+                <p>Authority is reviewing the issue</p>
+              </div>
+            </div>
+            <div class="timeline-mini-item">
+              <div class="tm-dot tm-dot-orange"></div>
+              <div>
+                <strong>In Progress</strong>
+                <p>Work has started on the issue</p>
+              </div>
+            </div>
+            <div class="timeline-mini-item">
+              <div class="tm-dot tm-dot-green"></div>
+              <div>
+                <strong>Resolved</strong>
+                <p>Issue has been fixed</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Description counter
+const desc = document.getElementById('description');
+const cnt  = document.getElementById('descCount');
+if (desc) {
+  desc.addEventListener('input', () => {
+    cnt.textContent = desc.value.length;
+    if (desc.value.length > 900) cnt.classList.add('text-danger');
+    else cnt.classList.remove('text-danger');
+  });
+}
+
+// Photo upload & preview
+const photoInput = document.getElementById('photo');
+if (photoInput) {
+  photoInput.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('photoPreview').style.display = 'block';
+        document.getElementById('photoPlaceholder').style.display = 'none';
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
+  });
+}
+function clearPhoto() {
+  photoInput.value = '';
+  document.getElementById('previewImg').src = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoPlaceholder').style.display = 'block';
+}
+
+// Drag & drop
+const photoArea = document.getElementById('photoArea');
+if (photoArea) {
+  photoArea.addEventListener('dragover', e => { e.preventDefault(); photoArea.classList.add('drag-over'); });
+  photoArea.addEventListener('dragleave', () => photoArea.classList.remove('drag-over'));
+  photoArea.addEventListener('drop', e => {
+    e.preventDefault();
+    photoArea.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+      photoInput.files = e.dataTransfer.files;
+      photoInput.dispatchEvent(new Event('change'));
+    }
+  });
+}
+
+// Map picker
+const map = L.map('locationMap').setView([23.0225, 72.5714], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+let marker = null;
+map.on('click', e => {
+  const {lat, lng} = e.latlng;
+  if (marker) marker.setLatLng(e.latlng);
+  else marker = L.marker(e.latlng, {draggable:true}).addTo(map);
+  marker.on('dragend', ev => updateCoords(ev.target.getLatLng().lat, ev.target.getLatLng().lng));
+  updateCoords(lat, lng);
+});
+function updateCoords(lat, lng) {
+  document.getElementById('latitude').value  = lat.toFixed(6);
+  document.getElementById('longitude').value = lng.toFixed(6);
+  document.getElementById('coordText').textContent = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+  document.getElementById('coordDisplay').style.display = 'block';
+}
+document.getElementById('clearPin').addEventListener('click', () => {
+  if (marker) { map.removeLayer(marker); marker = null; }
+  document.getElementById('latitude').value = '';
+  document.getElementById('longitude').value = '';
+  document.getElementById('coordDisplay').style.display = 'none';
+});
+
+// Auto-locate
+function locateMe() {
+  const btn = document.getElementById('locateBtn');
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Locating...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      map.setView([lat, lng], 16);
+      if (marker) marker.setLatLng([lat, lng]);
+      else marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+      marker.on('dragend', ev => updateCoords(ev.target.getLatLng().lat, ev.target.getLatLng().lng));
+      updateCoords(lat, lng);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Use My Location';
+    },
+    err => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Use My Location';
+      const msgs = {1: 'Location permission denied.', 2: 'Location unavailable.', 3: 'Request timed out.'};
+      alert(msgs[err.code] || 'Could not get your location.');
+    },
+    {enableHighAccuracy: true, timeout: 10000}
+  );
+}
+
+// ── Location autocomplete (debounced, 5 suggestions) ────────
+(function() {
+  const input = document.getElementById('location');
+  const list  = document.getElementById('locSuggestions');
+  let debounceTimer = null;
+
+  function closeSuggestions() {
+    list.style.display = 'none';
+    list.innerHTML = '';
+  }
+
+  function pickSuggestion(item) {
+    input.value = item.display_name;
+    closeSuggestions();
+    const lat = parseFloat(item.lat);
+    const lng = parseFloat(item.lon);
+    map.setView([lat, lng], 16);
+    if (marker) marker.setLatLng([lat, lng]);
+    else marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+    marker.on('dragend', ev => updateCoords(ev.target.getLatLng().lat, ev.target.getLatLng().lng));
+    updateCoords(lat, lng);
+    document.getElementById('searchLocStatus').style.display = 'none';
+  }
+
+  input.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    const q = this.value.trim();
+    if (q.length < 3) { closeSuggestions(); return; }
+
+    debounceTimer = setTimeout(() => {
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q), {
+        headers: { 'Accept-Language': 'en' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        closeSuggestions();
+        if (!data || data.length === 0) return;
+        data.forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'loc-suggestion-item';
+          li.innerHTML = '<i class="bi bi-geo-alt text-danger me-2"></i>' + item.display_name;
+          li.addEventListener('mousedown', function(e) {
+            e.preventDefault(); // prevent input blur before click fires
+            pickSuggestion(item);
+          });
+          list.appendChild(li);
+        });
+        list.style.display = 'block';
+      })
+      .catch(() => closeSuggestions());
+    }, 400);
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!input.contains(e.target) && !list.contains(e.target)) closeSuggestions();
+  });
+
+  // Keyboard navigation
+  input.addEventListener('keydown', function(e) {
+    const items = list.querySelectorAll('.loc-suggestion-item');
+    const active = list.querySelector('.loc-suggestion-item.active');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!active) { if (items[0]) items[0].classList.add('active'); }
+      else {
+        active.classList.remove('active');
+        const next = active.nextElementSibling;
+        if (next) next.classList.add('active');
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (active) {
+        active.classList.remove('active');
+        const prev = active.previousElementSibling;
+        if (prev) prev.classList.add('active');
+      }
+    } else if (e.key === 'Escape') {
+      closeSuggestions();
+    }
+    // Enter is handled separately by the existing listener
+  });
+})();
+
+// Search location on map using Nominatim (OpenStreetMap)
+function searchLocation() {
+  const input   = document.getElementById('location');
+  const btn     = document.getElementById('searchLocBtn');
+  const icon    = document.getElementById('searchLocIcon');
+  const status  = document.getElementById('searchLocStatus');
+  const query   = input.value.trim();
+
+  if (!query) {
+    input.focus();
+    return;
+  }
+
+  // Show spinner
+  btn.disabled = true;
+  icon.className = 'spinner-border spinner-border-sm';
+
+  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
+    headers: { 'Accept-Language': 'en' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    icon.className = 'bi bi-search';
+
+    if (!data || data.length === 0) {
+      status.style.display = 'block';
+      status.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Location not found. Try a more specific address.</span>';
+      return;
+    }
+
+    const lat = parseFloat(data[0].lat);
+    const lng = parseFloat(data[0].lon);
+
+    // Fly map to result
+    map.setView([lat, lng], 16);
+
+    // Drop / move pin
+    if (marker) marker.setLatLng([lat, lng]);
+    else marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+    marker.on('dragend', ev => updateCoords(ev.target.getLatLng().lat, ev.target.getLatLng().lng));
+    updateCoords(lat, lng);
+
+    status.style.display = 'block';
+    status.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Found: ' + data[0].display_name.substring(0, 80) + '...</span>';
+  })
+  .catch(() => {
+    btn.disabled = false;
+    icon.className = 'bi bi-search';
+    status.style.display = 'block';
+    status.innerHTML = '<span class="text-danger"><i class="bi bi-wifi-off me-1"></i>Search failed. Check your internet connection.</span>';
+  });
+}
+
+// Also trigger search on Enter key in location input
+document.getElementById('location').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); searchLocation(); }
+});
+
+// Search by PIN code using Nominatim
+function searchByPincode() {
+  const input  = document.getElementById('pincode');
+  const btn    = document.getElementById('searchPinBtn');
+  const icon   = document.getElementById('searchPinIcon');
+  const status = document.getElementById('searchPinStatus');
+  const pin    = input.value.trim();
+
+  if (!pin) { input.focus(); return; }
+
+  btn.disabled = true;
+  icon.className = 'spinner-border spinner-border-sm';
+  status.style.display = 'none';
+
+  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&postalcode=' + encodeURIComponent(pin) + '&countrycodes=in', {
+    headers: { 'Accept-Language': 'en' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    icon.className = 'bi bi-search';
+
+    if (!data || data.length === 0) {
+      status.style.display = 'block';
+      status.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>PIN code not found. Try a different code.</span>';
+      return;
+    }
+
+    const lat = parseFloat(data[0].lat);
+    const lng = parseFloat(data[0].lon);
+
+    // Fly map to pincode area
+    map.setView([lat, lng], 14);
+
+    // Drop / move pin
+    if (marker) marker.setLatLng([lat, lng]);
+    else marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+    marker.on('dragend', ev => updateCoords(ev.target.getLatLng().lat, ev.target.getLatLng().lng));
+    updateCoords(lat, lng);
+
+    // Fill location field if empty
+    const locInput = document.getElementById('location');
+    if (!locInput.value.trim()) {
+      locInput.value = data[0].display_name.substring(0, 120);
+    }
+
+    status.style.display = 'block';
+    status.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Found: ' + data[0].display_name.substring(0, 80) + '...</span>';
+  })
+  .catch(() => {
+    btn.disabled = false;
+    icon.className = 'bi bi-search';
+    status.style.display = 'block';
+    status.innerHTML = '<span class="text-danger"><i class="bi bi-wifi-off me-1"></i>Search failed. Check your internet connection.</span>';
+  });
+}
+
+// Trigger pincode search on Enter key
+document.getElementById('pincode').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); searchByPincode(); }
+});
+
+// Form validation
+document.getElementById('reportForm').addEventListener('submit', function(e) {
+  let valid = true;
+  // Category
+  const catSelected = document.querySelector('input[name="category"]:checked');
+  if (!catSelected) {
+    document.getElementById('categoryError').textContent = 'Please select an issue category.';
+    document.getElementById('categoryError').style.display = 'block';
+    valid = false;
+  } else {
+    document.getElementById('categoryError').style.display = 'none';
+  }
+  // Standard HTML5 validation
+  if (!this.checkValidity()) { this.classList.add('was-validated'); valid = false; }
+  if (!valid) { e.preventDefault(); return; }
+  // Show loading
+  document.querySelector('.btn-text').classList.add('d-none');
+  document.querySelector('.btn-loading').classList.remove('d-none');
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<div class="admin-login-page">
+  <div class="login-card" data-aos="zoom-in">
+    <div class="login-card-header">
+      <div class="login-logo">
+        <i class="bi bi-shield-lock-fill"></i>
+      </div>
+      <h4>Admin Portal</h4>
+      <p class="text-muted small">CivicFix — Secure Admin Access</p>
+    </div>
+    <div class="login-card-body">
+      <form method="POST" action="{{ url_for('admin_login') }}" id="loginForm" novalidate>
+        <div class="mb-4">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-fill text-primary"></i></span>
+            <input type="text" class="form-control custom-input" id="username" name="username"
+              placeholder="Enter admin username" required autofocus/>
+          </div>
+          <div class="invalid-feedback">Username is required.</div>
+        </div>
+        <div class="mb-4">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock-fill text-primary"></i></span>
+            <input type="password" class="form-control custom-input" id="password" name="password"
+              placeholder="Enter password" required/>
+            <button type="button" class="btn btn-outline-secondary" id="togglePwd" tabindex="-1">
+              <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback">Password is required.</div>
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-admin-login">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="login-card-footer">
+      <a href="{{ url_for('index') }}"><i class="bi bi-arrow-left me-1"></i>Back to CivicFix</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('togglePwd').addEventListener('click', function() {
+  const pw = document.getElementById('password');
+  const ic = document.getElementById('eyeIcon');
+  if (pw.type === 'password') { pw.type = 'text'; ic.className = 'bi bi-eye-slash'; }
+  else { pw.type = 'password'; ic.className = 'bi bi-eye'; }
+});
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  if (!this.checkValidity()) { e.preventDefault(); this.classList.add('was-validated'); }
+});
+</script>
+{% endblock %}

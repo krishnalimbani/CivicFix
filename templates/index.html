@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+  <div class="container">
+    <div class="row align-items-center min-vh-85">
+      <div class="col-lg-6 hero-text" data-aos="fade-right">
+        <div class="hero-badge mb-3">
+          <span><i class="bi bi-globe2 me-2"></i>UN SDG 11 — Sustainable Cities</span>
+        </div>
+        <h1 class="hero-title">
+          Report. Track.<br/>
+          <span class="gradient-text">Resolve.</span>
+        </h1>
+        <p class="hero-subtitle">
+          CivicFix empowers citizens to report civic issues like potholes, broken streetlights, 
+          overflowing garbage, and drainage problems — directly to local authorities.
+        </p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a href="{{ url_for('report') }}" class="btn btn-hero-primary">
+            <i class="bi bi-megaphone-fill me-2"></i>Report an Issue
+          </a>
+          <a href="{{ url_for('track') }}" class="btn btn-hero-outline">
+            <i class="bi bi-search me-2"></i>Track My Report
+          </a>
+        </div>
+        <div class="hero-stats mt-5">
+          <div class="hero-stat-item">
+            <span class="stat-num" data-target="{{ total }}">0</span>
+            <span class="stat-label">Total Reports</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat-item">
+            <span class="stat-num" data-target="{{ resolved }}">0</span>
+            <span class="stat-label">Resolved</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat-item">
+            <span class="stat-num" data-target="{{ progress }}">0</span>
+            <span class="stat-label">In Progress</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 d-none d-lg-flex justify-content-center" data-aos="fade-left">
+        <div class="hero-illustration">
+          <div class="city-card floating">
+            <div class="city-card-inner">
+              <div class="city-icon-grid">
+                <div class="city-icon-item pulse-1">
+                  <i class="bi bi-cone-striped"></i>
+                  <span>Pothole</span>
+                </div>
+                <div class="city-icon-item pulse-2">
+                  <i class="bi bi-lightbulb-off"></i>
+                  <span>Streetlight</span>
+                </div>
+                <div class="city-icon-item pulse-3">
+                  <i class="bi bi-trash3"></i>
+                  <span>Garbage</span>
+                </div>
+                <div class="city-icon-item pulse-4">
+                  <i class="bi bi-droplet-half"></i>
+                  <span>Drainage</span>
+                </div>
+                <div class="city-icon-item pulse-5">
+                  <i class="bi bi-water"></i>
+                  <span>Water</span>
+                </div>
+                <div class="city-icon-item pulse-6">
+                  <i class="bi bi-sign-stop"></i>
+                  <span>Road</span>
+                </div>
+              </div>
+              <div class="map-preview-badge">
+                <i class="bi bi-geo-alt-fill me-1 text-danger"></i>
+                <span>Live Issue Map</span>
+              </div>
+            </div>
+          </div>
+          <div class="floating-badge badge-1">
+            <i class="bi bi-check-circle-fill text-success me-1"></i>Issue Resolved!
+          </div>
+          <div class="floating-badge badge-2">
+            <i class="bi bi-geo-alt-fill text-danger me-1"></i>New Report
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-wave">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" preserveAspectRatio="none">
+      <path fill="#f8fafc" d="M0,64L80,58.7C160,53,320,43,480,48C640,53,800,75,960,80C1120,85,1280,75,1360,69.3L1440,64L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z"/>
+    </svg>
+  </div>
+</section>
+
+<!-- Stats Cards -->
+<section class="section-padding bg-light-custom">
+  <div class="container">
+    <div class="row gy-4">
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="0">
+        <div class="stat-card stat-card-blue">
+          <div class="stat-card-icon"><i class="bi bi-clipboard-data-fill"></i></div>
+          <div class="stat-card-body">
+            <h3 class="counter" data-target="{{ total }}">{{ total }}</h3>
+            <p>Total Reports</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-card stat-card-orange">
+          <div class="stat-card-icon"><i class="bi bi-hourglass-split"></i></div>
+          <div class="stat-card-body">
+            <h3 class="counter" data-target="{{ submitted }}">{{ submitted }}</h3>
+            <p>Submitted</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-card stat-card-purple">
+          <div class="stat-card-icon"><i class="bi bi-arrow-clockwise"></i></div>
+          <div class="stat-card-body">
+            <h3 class="counter" data-target="{{ progress }}">{{ progress }}</h3>
+            <p>In Progress</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="stat-card stat-card-green">
+          <div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div>
+          <div class="stat-card-body">
+            <h3 class="counter" data-target="{{ resolved }}">{{ resolved }}</h3>
+            <p>Resolved</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="section-padding">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <span class="section-badge">Simple Process</span>
+      <h2 class="section-title">How CivicFix Works</h2>
+      <p class="section-subtitle">Report a civic issue in three easy steps and track its resolution</p>
+    </div>
+    <div class="row gy-4 position-relative">
+      <div class="steps-connector d-none d-lg-block"></div>
+      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="0">
+        <div class="how-card">
+          <div class="step-number">01</div>
+          <div class="how-icon"><i class="bi bi-camera-fill"></i></div>
+          <h4>Report the Issue</h4>
+          <p>Fill out the simple form with the issue category, description, location, and an optional photo.</p>
+        </div>
+      </div>
+      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="150">
+        <div class="how-card">
+          <div class="step-number">02</div>
+          <div class="how-icon"><i class="bi bi-search-heart"></i></div>
+          <h4>Get Your Report ID</h4>
+          <p>Receive a unique Report ID instantly. Use it anytime to track the real-time status of your complaint.</p>
+        </div>
+      </div>
+      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="how-card">
+          <div class="step-number">03</div>
+          <div class="how-icon"><i class="bi bi-tools"></i></div>
+          <h4>Issue Gets Resolved</h4>
+          <p>Authorities review and resolve the issue. You can track progress from Submitted to Resolved.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Issue Categories -->
+<section class="section-padding bg-light-custom">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <span class="section-badge">What You Can Report</span>
+      <h2 class="section-title">Issue Categories</h2>
+      <p class="section-subtitle">CivicFix handles a wide range of civic problems in your neighborhood</p>
+    </div>
+    <div class="row gy-4">
+      {% set categories = [
+        ('Pothole', 'bi-cone-striped', 'cat-orange', 'Damaged roads and dangerous potholes affecting vehicle safety.'),
+        ('Broken Streetlight', 'bi-lightbulb-off', 'cat-yellow', 'Non-functional street lights creating safety hazards at night.'),
+        ('Garbage Overflow', 'bi-trash3', 'cat-green', 'Overflowing garbage bins causing hygiene and environmental issues.'),
+        ('Drainage Problem', 'bi-droplet-half', 'cat-blue', 'Blocked drains causing waterlogging and mosquito breeding.'),
+        ('Water Leakage', 'bi-water', 'cat-cyan', 'Burst pipes or water supply leakage wasting precious resources.'),
+        ('Road Damage', 'bi-exclamation-triangle', 'cat-red', 'Damaged road surfaces, broken kerbs, and cracked pavements.')
+      ] %}
+      {% for name, icon, cls, desc in categories %}
+      <div class="col-6 col-md-4 col-lg-2" data-aos="zoom-in" data-aos-delay="{{ loop.index0 * 80 }}">
+        <a href="{{ url_for('report') }}" class="cat-card {{ cls }}">
+          <i class="bi {{ icon }}"></i>
+          <span>{{ name }}</span>
+          <p class="cat-desc">{{ desc }}</p>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Recent Reports -->
+<section class="section-padding">
+  <div class="container">
+    <div class="section-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3" data-aos="fade-up">
+      <div>
+        <span class="section-badge">Live Feed</span>
+        <h2 class="section-title mb-0">Recent Reports</h2>
+      </div>
+      <a href="{{ url_for('map_view') }}" class="btn btn-outline-primary">
+        <i class="bi bi-map me-2"></i>View All on Map
+      </a>
+    </div>
+    <div class="row gy-3">
+      {% if recent %}
+        {% for r in recent %}
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 80 }}">
+          <div class="report-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="report-category-badge cat-{{ r['category']|lower|replace(' ', '-') }}">
+                {{ r['category'] }}
+              </span>
+              <span class="status-badge status-{{ r['status']|lower|replace(' ', '-') }}">
+                {{ r['status'] }}
+              </span>
+            </div>
+            <p class="report-desc">{{ r['description'][:90] }}{% if r['description']|length > 90 %}...{% endif %}</p>
+            <div class="report-meta">
+              <span><i class="bi bi-geo-alt me-1"></i>{{ r['location'][:30] }}{% if r['location']|length > 30 %}...{% endif %}</span>
+              <span><i class="bi bi-clock me-1"></i>{{ r['created_at'][:10] }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <code class="report-id-badge">{{ r['report_id'] }}</code>
+              <a href="{{ url_for('track', report_id=r['report_id']) }}" class="btn btn-sm btn-track">Track</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12 text-center py-5">
+          <i class="bi bi-inbox fs-1 text-muted"></i>
+          <p class="text-muted mt-2">No reports yet. Be the first to report!</p>
+          <a href="{{ url_for('report') }}" class="btn btn-primary mt-2">Report an Issue</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="container text-center" data-aos="zoom-in">
+    <div class="cta-icon mb-3"><i class="bi bi-megaphone-fill"></i></div>
+    <h2 class="cta-title">See a problem in your city?</h2>
+    <p class="cta-subtitle">Don't wait — report it now and help build a better community for everyone.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+      <a href="{{ url_for('report') }}" class="btn btn-cta-primary">
+        <i class="bi bi-plus-circle-fill me-2"></i>Report Now — It's Free
+      </a>
+      <a href="{{ url_for('map_view') }}" class="btn btn-cta-outline">
+        <i class="bi bi-map-fill me-2"></i>Explore the Map
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

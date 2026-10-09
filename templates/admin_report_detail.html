@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Report Detail — Admin{% endblock %}
+
+{% block content %}
+
+<div class="admin-header">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h4 class="mb-0 fw-700"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Report Detail</h4>
+        <small class="text-muted">Viewing full report information</small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+        </a>
+        <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container admin-body">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="detail-card" data-aos="fade-up">
+        <div class="detail-card-header">
+          <div>
+            <code class="track-report-id">{{ report['report_id'] }}</code>
+            <span class="cat-badge-sm ms-2">{{ report['category'] }}</span>
+          </div>
+          <span class="status-badge-lg status-{{ report['status']|lower|replace(' ', '-') }}">
+            {{ report['status'] }}
+          </span>
+        </div>
+        <div class="detail-card-body">
+          <div class="row gy-4">
+            <div class="col-md-6">
+              <div class="detail-group">
+                <label><i class="bi bi-card-text me-1"></i>Description</label>
+                <p>{{ report['description'] }}</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group">
+                <label><i class="bi bi-geo-alt-fill me-1 text-danger"></i>Location</label>
+                <p>{{ report['location'] }}</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group">
+                <label><i class="bi bi-calendar3 me-1"></i>Date Submitted</label>
+                <p>{{ report['created_at'] }}</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group">
+                <label><i class="bi bi-person me-1"></i>Reported By</label>
+                <p>{{ report['name'] or 'Anonymous' }}</p>
+              </div>
+            </div>
+            {% if report['email'] %}
+            <div class="col-md-6">
+              <div class="detail-group">
+                <label><i class="bi bi-envelope me-1"></i>Email</label>
+                <p><a href="mailto:{{ report['email'] }}">{{ report['email'] }}</a></p>
+              </div>
+            </div>
+            {% endif %}
+            {% if report['latitude'] and report['longitude'] %}
+            <div class="col-md-6">
+              <div class="detail-group">
+                <label><i class="bi bi-pin-map me-1"></i>Coordinates</label>
+                <p>{{ "%.5f"|format(report['latitude']) }}, {{ "%.5f"|format(report['longitude']) }}</p>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          {% if report['photo'] %}
+          <div class="mt-4">
+            <label class="detail-label"><i class="bi bi-image me-1"></i>Attached Photo</label>
+            <img src="{{ url_for('static', filename='uploads/' + report['photo']) }}"
+              alt="Issue Photo" class="img-fluid rounded issue-photo mt-2"/>
+          </div>
+          {% endif %}
+
+          {% if report['latitude'] and report['longitude'] %}
+          <div class="mt-4">
+            <label class="detail-label"><i class="bi bi-map me-1"></i>Location on Map</label>
+            <div id="detailMap" class="track-map mt-2"></div>
+          </div>
+          {% endif %}
+
+          <!-- Update Status -->
+          <div class="mt-4 p-4 bg-light rounded-3">
+            <h6 class="fw-700 mb-3"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Update Report Status</h6>
+            <form method="POST" action="{{ url_for('update_status', id=report['id']) }}" class="d-flex gap-3 flex-wrap">
+              <select name="status" class="form-select" style="max-width:220px" required>
+                {% for s in ['Submitted','Under Review','In Progress','Resolved'] %}
+                <option value="{{ s }}" {% if report['status'] == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check2 me-1"></i>Update Status
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if report['latitude'] and report['longitude'] %}
+<script>
+const map = L.map('detailMap').setView([{{ report['latitude'] }}, {{ report['longitude'] }}], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+L.marker([{{ report['latitude'] }}, {{ report['longitude'] }}])
+  .addTo(map)
+  .bindPopup('<strong>{{ report["report_id"] }}</strong><br/>{{ report["category"] }}')
+  .openPopup();
+</script>
+{% endif %}
+{% endblock %}

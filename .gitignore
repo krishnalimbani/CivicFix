@@ -1,0 +1,29 @@
+# Database
+civicfix.db
+
+# Uploaded photos (user content)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Test/verify scripts
+verify_app.py
+verify_pincode.py
+verify_suggest.py
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
